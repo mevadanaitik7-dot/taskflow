@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#0f0c29" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>⚡ TaskFlow</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body>
+
+<div id="splash" class="splash">
+  <div class="splash-content">
+    <div class="splash-icon">⚡</div>
+    <h1>TaskFlow</h1>
+    <p>Your Daily Power Planner</p>
+    <div class="splash-loader"><div class="loader-bar"></div></div>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+
+  <header class="header">
+    <div class="header-left">
+      <div class="header-greeting" id="headerGreeting">Good Morning! 🌅</div>
+      <div class="header-date" id="headerDate"></div>
+    </div>
+    <div class="header-right">
+      <button class="icon-btn" onclick="openNotifSettings()"><i class="fas fa-bell"></i></button>
+      <button class="icon-btn" onclick="showSection('history')"><i class="fas fa-history"></i></button>
+      <button class="icon-btn" onclick="showSection('progress')"><i class="fas fa-chart-bar"></i></button>
+    </div>
+  </header>
+
+  <div class="quote-banner" id="quoteBanner">
+    <div class="quote-icon">💫</div>
+    <div class="quote-text" id="quoteText">Loading inspiration...</div>
+    <button class="quote-refresh" onclick="refreshQuote()"><i class="fas fa-sync-alt"></i></button>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total</div></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><div class="stat-value completed" id="statDone">0</div><div class="stat-label">Done ✅</div></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><div class="stat-value pending" id="statPending">0</div><div class="stat-label">Pending ⏳</div></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item"><div class="stat-value percent" id="statPercent">0%</div><div class="stat-label">Today</div></div>
+  </div>
+
+  <div class="progress-section">
+    <div class="progress-label"><span>Aaj Ka Progress</span><span id="progressPct">0%</span></div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-message" id="progressMsg">Shuru karo! Har kadam count karta hai 🚀</div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="tab active" onclick="showTab('today')" id="tab-today"><i class="fas fa-sun"></i> Aaj</button>
+    <button class="tab" onclick="showTab('upcoming')" id="tab-upcoming"><i class="fas fa-calendar"></i> Upcoming</button>
+    <button class="tab" onclick="showTab('daily')" id="tab-daily"><i class="fas fa-redo"></i> Daily</button>
+    <button class="tab" onclick="showSection('progress')" id="tab-progress"><i class="fas fa-chart-pie"></i> Progress</button>
+  </div>
+
+  <div id="section-today" class="section active">
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="filterTasks('all', this)">All</button>
+      <button class="filter-btn" onclick="filterTasks('very-important', this)">🔴 V.Imp</button>
+      <button class="filter-btn" onclick="filterTasks('important', this)">🟠 Imp</button>
+      <button class="filter-btn" onclick="filterTasks('normal', this)">🟡 Normal</button>
+      <button class="filter-btn" onclick="filterTasks('low', this)">🟢 Low</button>
+    </div>
+    <div id="taskList" class="task-list"></div>
+    <div class="empty-state" id="emptyToday" style="display:none"><div class="empty-icon">🎯</div><p>Koi task nahi! Add karo apna pehla task</p></div>
+  </div>
+
+  <div id="section-upcoming" class="section" style="display:none">
+    <div id="upcomingList" class="task-list"></div>
+    <div class="empty-state" id="emptyUpcoming" style="display:none"><div class="empty-icon">📅</div><p>Koi upcoming task nahi</p></div>
+  </div>
+
+  <div id="section-daily" class="section" style="display:none">
+    <div class="daily-header">
+      <h3>🔄 Daily Recurring Tasks</h3>
+      <button class="btn-add-daily" onclick="openDailyTaskManager()"><i class="fas fa-cog"></i> Manage</button>
+    </div>
+    <div id="dailyList" class="task-list"></div>
+  </div>
+
+  <button class="fab" onclick="openAddTaskModal()"><i class="fas fa-plus"></i></button>
+</div>
+
+<!-- ADD TASK MODAL -->
+<div id="addTaskModal" class="modal-overlay" onclick="closeModalOutside(event, 'addTaskModal')">
+  <div class="modal glass-modal">
+    <div class="modal-header">
+      <h2><i class="fas fa-plus-circle"></i> Naya Task</h2>
+      <button class="close-btn" onclick="closeModal('addTaskModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Task Ka Naam *</label><input type="text" id="taskTitle" placeholder="e.g. Morning Exercise 💪" class="form-input"/></div>
+      <div class="form-group"><label>Description (Optional)</label><textarea id="taskDesc" placeholder="Task ke baare mein kuch likhna hai?" class="form-input" rows="2"></textarea></div>
+      <div class="form-group">
+        <label>Priority Level *</label>
+        <div class="priority-grid">
+          <div class="priority-card" data-priority="very-important" onclick="selectPriority('very-important', this)"><div class="p-icon">🔴</div><div class="p-name">Very Important</div></div>
+          <div class="priority-card" data-priority="important" onclick="selectPriority('important', this)"><div class="p-icon">🟠</div><div class="p-name">Important</div></div>
+          <div class="priority-card" data-priority="normal" onclick="selectPriority('normal', this)"><div class="p-icon">🟡</div><div class="p-name">Normal</div></div>
+          <div class="priority-card" data-priority="daily" onclick="selectPriority('daily', this)"><div class="p-icon">🔵</div><div class="p-name">Daily Task</div></div>
+          <div class="priority-card" data-priority="low" onclick="selectPriority('low', this)"><div class="p-icon">🟢</div><div class="p-name">Low Priority</div></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Task Color</label>
+        <div class="color-picker">
+          <div class="color-opt" style="background:#f093fb" data-color="#f093fb" onclick="selectColor('#f093fb', this)"></div>
+          <div class="color-opt" style="background:#f5576c" data-color="#f5576c" onclick="selectColor('#f5576c', this)"></div>
+          <div class="color-opt" style="background:#4facfe" data-color="#4facfe" onclick="selectColor('#4facfe', this)"></div>
+          <div class="color-opt" style="background:#43e97b" data-color="#43e97b" onclick="selectColor('#43e97b', this)"></div>
+          <div class="color-opt" style="background:#f7971e" data-color="#f7971e" onclick="selectColor('#f7971e', this)"></div>
+          <div class="color-opt" style="background:#a18cd1" data-color="#a18cd1" onclick="selectColor('#a18cd1', this)"></div>
+          <div class="color-opt" style="background:#ffecd2" data-color="#ffecd2" onclick="selectColor('#ffecd2', this)"></div>
+          <div class="color-opt" style="background:#84fab0" data-color="#84fab0" onclick="selectColor('#84fab0', this)"></div>
+        </div>
+      </div>
+      <div class="form-group"><label>Date</label><input type="date" id="taskDate" class="form-input"/></div>
+      <div class="form-group"><label>Reminder Time (Optional)</label><input type="time" id="taskTime" class="form-input"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('addTaskModal')">Cancel</button>
+      <button class="btn-save" onclick="addTask()"><i class="fas fa-rocket"></i> Add Task!</button>
+    </div>
+  </div>
+</div>
+
+<!-- DAILY MANAGER MODAL -->
+<div id="dailyManagerModal" class="modal-overlay" onclick="closeModalOutside(event,'dailyManagerModal')">
+  <div class="modal glass-modal">
+    <div class="modal-header">
+      <h2><i class="fas fa-redo"></i> Daily Tasks Manage Karo</h2>
+      <button class="close-btn" onclick="closeModal('dailyManagerModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <p class="info-text">Ye tasks roz automatically add honge! 🔄</p>
+      <div class="form-group">
+        <input type="text" id="newDailyTask" placeholder="Naya daily task likho..." class="form-input"/>
+        <div class="color-picker" style="margin-top:10px">
+          <div class="color-opt" style="background:#4facfe" data-color="#4facfe" onclick="selectDailyColor('#4facfe', this)"></div>
+          <div class="color-opt" style="background:#43e97b" data-color="#43e97b" onclick="selectDailyColor('#43e97b', this)"></div>
+          <div class="color-opt" style="background:#f093fb" data-color="#f093fb" onclick="selectDailyColor('#f093fb', this)"></div>
+          <div class="color-opt" style="background:#f7971e" data-color="#f7971e" onclick="selectDailyColor('#f7971e', this)"></div>
+        </div>
+        <button class="btn-save" style="width:100%;margin-top:10px" onclick="addDailyTemplate()"><i class="fas fa-plus"></i> Add Daily Task</button>
+      </div>
+      <div id="dailyTemplateList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRESS MODAL -->
+<div id="progressModal" class="modal-overlay" onclick="closeModalOutside(event,'progressModal')">
+  <div class="modal glass-modal" style="max-height:90vh;overflow-y:auto">
+    <div class="modal-header">
+      <h2><i class="fas fa-chart-line"></i> Progress Report</h2>
+      <button class="close-btn" onclick="closeModal('progressModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="progress-card"><h3>📅 Is Month Ka Overview</h3><div class="month-stats" id="monthStats"></div></div>
+      <div class="progress-card"><h3>📊 Daily Progress Chart</h3><div class="chart-container"><canvas id="progressChart" width="320" height="200"></canvas></div></div>
+      <div class="progress-card"><h3>🎯 Monthly Completion</h3><div class="ring-container"><canvas id="ringChart" width="160" height="160"></canvas><div class="ring-center" id="ringCenter">0%</div></div></div>
+      <div class="progress-card"><h3>📋 Day-wise Summary</h3><div id="daySummary"></div></div>
+      <div style="text-align:center;margin-top:15px"><button class="btn-danger" onclick="confirmMonthReset()"><i class="fas fa-refresh"></i> Monthly Reset</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY MODAL -->
+<div id="historyModal" class="modal-overlay" onclick="closeModalOutside(event,'historyModal')">
+  <div class="modal glass-modal" style="max-height:90vh;overflow-y:auto">
+    <div class="modal-header">
+      <h2><i class="fas fa-history"></i> Task History</h2>
+      <button class="close-btn" onclick="closeModal('historyModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><input type="month" id="historyMonth" class="form-input" onchange="loadHistory()"/></div>
+      <div id="historyContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATION MODAL -->
+<div id="notifModal" class="modal-overlay" onclick="closeModalOutside(event,'notifModal')">
+  <div class="modal glass-modal">
+    <div class="modal-header">
+      <h2><i class="fas fa-bell"></i> Notification Settings</h2>
+      <button class="close-btn" onclick="closeModal('notifModal')"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="notif-option">
+        <div class="notif-info"><div class="notif-title">🌅 Morning Reminder</div><div class="notif-desc">Subah tasks yaad dilayega</div></div>
+        <input type="time" id="morningTime" value="08:00" class="form-input" style="width:100px"/>
+        <label class="toggle"><input type="checkbox" id="morningToggle" onchange="saveNotifSettings()"/><span class="slider"></span></label>
+      </div>
+      <div class="notif-option">
+        <div class="notif-info"><div class="notif-title">🌙 Evening Review</div><div class="notif-desc">Shaam ko progress check karo</div></div>
+        <input type="time" id="eveningTime" value="20:00" class="form-input" style="width:100px"/>
+        <label class="toggle"><input type="checkbox" id="eveningToggle" onchange="saveNotifSettings()"/><span class="slider"></span></label>
+      </div>
+      <button class="btn-save" style="width:100%;margin-top:15px" onclick="requestNotificationPermission()"><i class="fas fa-bell"></i> Notifications Enable Karo</button>
+      <div id="notifStatus" class="notif-status"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div id="confirmModal" class="modal-overlay">
+  <div class="modal glass-modal" style="max-width:300px">
+    <div class="modal-body" style="text-align:center;padding:30px">
+      <div style="font-size:3rem;margin-bottom:15px">⚠️</div>
+      <h3 id="confirmTitle">Are you sure?</h3>
+      <p id="confirmMsg" style="color:#aaa;margin:10px 0"></p>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:20px">
+        <button class="btn-cancel" onclick="closeModal('confirmModal')">Cancel</button>
+        <button class="btn-danger" id="confirmBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<div id="celebration" class="celebration" style="display:none">
+  <div class="celebration-content">
+    <div class="celebration-emoji">🎉</div>
+    <h2>Sab Tasks Complete!</h2>
+    <p>Aaj ka din aapka tha! Kal bhi aisa hi karo! 💪</p>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
